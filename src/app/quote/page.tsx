@@ -337,10 +337,11 @@ export default function QuotePage() {
             ) : (
             <div className="flex-1 rounded-2xl border-2 border-solid border-primary/30 bg-primary/5 dark:bg-primary/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[400px]">
                 <div className="absolute inset-0 z-0 pointer-events-auto">
-                   <ModelViewer file={file} colorHex={selectedColor.hex} />
+                   {file && <ModelViewer file={file} colorHex={selectedColor.hex} />}
                 </div>
                 
                 {/* Floating overlay for stats */}
+                {file && (
                 <div className="absolute bottom-6 left-6 right-6 z-10 flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-lg">
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-xs" title={file.name}>{file.name}</h3>
@@ -376,6 +377,7 @@ export default function QuotePage() {
                     </button>
                   </div>
                 </div>
+                )}
             </div>
             )}
 
