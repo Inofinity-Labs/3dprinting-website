@@ -5,10 +5,14 @@ import Footer from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { useCart } from "@/contexts/CartContext";
+import { formatLKR } from "@/utils/currency";
+import Link from "next/link";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { state, getTotalPrice, clearCart } = useCart();
   const [user, setUser] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -23,7 +27,17 @@ export default function CheckoutPage() {
     paymentMethod: "card"
   });
 
-  const cartTotal = 452.12;
+  // Redirect if cart is empty
+  useEffect(() => {
+    if (state.items.length === 0) {
+      router.push('/shop');
+    }
+  }, [state.items, router]);
+
+  const cartTotal = getTotalPrice();
+  const shippingCost = cartTotal > 15000 ? 0 : 1500; // Free shipping over Rs. 15,000
+  const taxAmount = cartTotal * 0.05; // 5% tax
+  const finalTotal = cartTotal + shippingCost + taxAmount;
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -49,6 +63,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (state.items.length === 0) {
+      setErrorMsg("Your cart is empty.");
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg("");
 
@@ -58,7 +77,7 @@ export default function CheckoutPage() {
         .from('orders')
         .insert({
           user_id: user.id,
-          total_amount: cartTotal,
+          total_amount: finalTotal,
           status: 'processing',
           shipping_address: formData
         })
@@ -67,15 +86,34 @@ export default function CheckoutPage() {
 
       if (orderError) throw orderError;
 
-      // For a real app, we would also insert into `order_items` here using the cart data
-      // using order.id as the foreign key.
+      // 2. Create order items for each cart item
+      const orderItems = state.items.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price
+      }));
 
-      // Redirect to the newly created order's tracking page
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error('Order items error:', itemsError);
+        // If order items fail but order was created, still proceed
+        // In a real app, you might want to handle this differently
+        if (itemsError.message?.includes('row-level security')) {
+          console.warn('RLS policy issue - order created but items may not be properly linked');
+        }
+      }
+
+      // 3. Clear the cart and redirect
+      clearCart();
       router.push(`/track/${order.id}`);
 
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err.message || alert("Failed to place order."));
+      setErrorMsg(err.message || "Failed to place order.");
     } finally {
       setIsSubmitting(false);
     }
@@ -200,7 +238,7 @@ export default function CheckoutPage() {
               </section>
 
               <button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white dark:text-background-dark font-black uppercase tracking-tighter py-5 rounded-xl transition-all shadow-lg shadow-primary/20 text-lg flex items-center justify-center gap-2">
-                {isSubmitting ? "Processing..." : `Place Order - $${cartTotal.toFixed(2)}`}
+                {isSubmitting ? "Processing..." : `Place Order - ${formatLKR(finalTotal)}`}
                 {!isSubmitting && <span className="material-symbols-outlined">arrow_forward</span>}
               </button>
             </div>
@@ -211,61 +249,68 @@ export default function CheckoutPage() {
                 
                 <div className="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm">
                   <h3 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Order Summary</h3>
-                  <div className="flex flex-col gap-4">
-                    
-                    {/* Item 1 */}
-                    <div className="flex gap-4">
-                      <div className="size-16 rounded-lg bg-slate-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
-                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBSRUhWuoFYMMF68JAFGdm9zE7IgKAqsDs3UN-lx8555NDUk5AHlnglDTIZs2yVb-GmpD5FImD2YO7Cws9TsHAwqtD49xxxqO4kX7hanpseraU0EAFpD96xAXPxDhs0oYPQNOJ1a64Qz48XJbWaNGF3r1OHLbjObGd_WXU_wh7pPmMwUZgIuR5Xi2rE3yr_HS3KwYslau_tGNnFCrX7XP3UYAKrJ_Q-ttRYloIfGm1EX3LdpwJqRm9JguPonto0G9x9mSRjIRnVv3g')" }}></div>
+                  
+                  {/* Cart is empty check */}
+                  {state.items.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-slate-500 dark:text-zinc-400 mb-4">Your cart is empty</p>
+                      <Link href="/shop" className="text-primary hover:underline font-bold">
+                        Continue Shopping
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Cart Items */}
+                      <div className="flex flex-col gap-4 mb-6">
+                        {state.items.map((item) => (
+                          <div key={item.id} className="flex gap-4">
+                            <div className="size-16 rounded-lg bg-slate-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                              {item.image_url ? (
+                                <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: `url("${item.image_url}")` }}></div>
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <span className="material-symbols-outlined text-slate-400">inventory_2</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-col flex-1">
+                              <div className="flex justify-between">
+                                <h4 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-2">{item.title}</h4>
+                                <span className="font-bold text-slate-900 dark:text-white">{formatLKR(item.price * item.quantity)}</span>
+                              </div>
+                              <p className="text-xs text-slate-500">{item.category}</p>
+                              <p className="text-xs text-slate-500">Qty: {item.quantity} × {formatLKR(item.price)}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex flex-col flex-1">
-                        <div className="flex justify-between">
-                          <h4 className="font-bold text-sm uppercase text-slate-900 dark:text-white">Titanium Gear v2</h4>
-                          <span className="font-bold text-slate-900 dark:text-white">$189.00</span>
+
+                      <hr className="my-6 border-slate-200 dark:border-zinc-800"/>
+
+                      {/* Pricing Summary */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500 font-medium">Subtotal</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{formatLKR(cartTotal)}</span>
                         </div>
-                        <p className="text-xs text-slate-500">SLS Printing • Ti-6Al-4V</p>
-                        <p className="text-xs text-slate-500">Qty: 2</p>
-                      </div>
-                    </div>
-
-                    {/* Item 2 */}
-                    <div className="flex gap-4">
-                      <div className="size-16 rounded-lg bg-slate-100 dark:bg-zinc-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
-                        <div className="w-full h-full bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAk8jTbi5IDV7Q8fALHCK93rz4FEs_H1mstpAu_sOzpNMlqZBd6wcezux6gPHYbZAb7PMYvIeV-392-X46K3V6jhEjusPyUVpzDN3xErNeWoFfP6zmKX6JuzTpHmnn3rMKLvNcIVNsydiwOFf9N4lqNEUKDJR-6KL5bufksj2_5xxwdei0I3BhM21LYtWb4ZcXbuh75ZyxL4jdNGE71ZNwxYY-X6izX9lSxtr6OsyiUspSqBmwXb1dsd0B-_5Fgv0Xf3poJ_J8IrH4')" }}></div>
-                      </div>
-                      <div className="flex flex-col flex-1">
-                        <div className="flex justify-between">
-                          <h4 className="font-bold text-sm uppercase text-slate-900 dark:text-white">Ergo Handle</h4>
-                          <span className="font-bold text-slate-900 dark:text-white">$45.00</span>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500 font-medium">
+                            Shipping {cartTotal > 15000 && <span className="text-green-600 text-xs">(FREE)</span>}
+                          </span>
+                          <span className="font-bold text-slate-900 dark:text-white">{formatLKR(shippingCost)}</span>
                         </div>
-                        <p className="text-xs text-slate-500">FDM • Carbon Fiber PLA</p>
-                        <p className="text-xs text-slate-500">Qty: 1</p>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-500 font-medium">Tax (5%)</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{formatLKR(taxAmount)}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
+                          <span className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white text-lg">Total</span>
+                          <span className="font-black text-primary text-xl">{formatLKR(finalTotal)}</span>
+                        </div>
                       </div>
-                    </div>
-
-                  </div>
-
-                  <hr className="my-6 border-slate-200 dark:border-zinc-800"/>
-
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Subtotal</span>
-                      <span className="font-bold text-slate-900 dark:text-white">$423.00</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Shipping</span>
-                      <span className="font-bold text-slate-900 dark:text-white">$12.50</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-slate-500 font-medium">Estimated Tax</span>
-                      <span className="font-bold text-slate-900 dark:text-white">$16.62</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
-                      <span className="font-black uppercase italic tracking-tighter text-slate-900 dark:text-white text-lg">Total</span>
-                      <span className="font-black text-primary text-xl">$452.12</span>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Trust Badges */}

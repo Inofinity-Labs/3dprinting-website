@@ -8,11 +8,12 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { estimatePrintVolume } from "@/utils/volumeCalculator";
 import ModelViewer from "@/components/ModelViewer";
+import { formatLKR } from "@/utils/currency";
 
 const MOCK_MATERIALS = [
-  { id: "mock-1", name: "PLA (Polylactic Acid)", type: "FDM", price_per_cm3: 0.05 },
-  { id: "mock-2", name: "Resin (SLA/DLP)", type: "SLA", price_per_cm3: 0.15 },
-  { id: "mock-3", name: "TPU (Flexible)", type: "FDM", price_per_cm3: 0.08 }
+  { id: "mock-1", name: "PLA (Polylactic Acid)", type: "FDM", price_per_cm3: 15 },
+  { id: "mock-2", name: "Resin (SLA/DLP)", type: "SLA", price_per_cm3: 45 },
+  { id: "mock-3", name: "TPU (Flexible)", type: "FDM", price_per_cm3: 24 }
 ];
 
 const COLORS = [
@@ -63,8 +64,8 @@ export default function QuotePage() {
       const infillMultiplier = 1 + ((infillDensity - 20) / 100) * 0.5;
       const finalPrice = basePrice * infillMultiplier * selectedColor.priceMultiplier;
       
-      // Add a base setup fee of $5
-      setEstimatedPrice(Math.max(5, finalPrice) + 5);
+      // Add a base setup fee of Rs. 1500
+      setEstimatedPrice(Math.max(1500, finalPrice) + 1500);
     } else {
       setEstimatedPrice(0);
     }
@@ -176,7 +177,7 @@ export default function QuotePage() {
                         <span className="material-symbols-outlined text-[20px]">{mat.type === 'FDM' ? 'layers' : 'opacity'}</span>
                         <span className="text-sm">{mat.name}</span>
                       </div>
-                      <span className="text-xs font-bold">${Number(mat.price_per_cm3).toFixed(2)}/cm³</span>
+                      <span className="text-xs font-bold">Rs. {Number(mat.price_per_cm3).toFixed(2)}/cm³</span>
                     </button>
                   ))}
                 </div>
@@ -231,11 +232,11 @@ export default function QuotePage() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-500">Base Setup Fee</span>
-                    <span className="font-medium text-slate-900 dark:text-white">$5.00</span>
+                    <span className="font-medium text-slate-900 dark:text-white">Rs. 1,500</span>
                   </div>
                   <div className="flex justify-between text-xl font-black text-slate-900 dark:text-white mt-4">
                     <span>Estimated Cost</span>
-                    <span className="text-primary">${estimatedPrice.toFixed(2)}</span>
+                    <span className="text-primary">{formatLKR(estimatedPrice)}</span>
                   </div>
                 </div>
               )}

@@ -100,7 +100,7 @@ export default function Home() {
                   <p className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">Arch-Model v2</p>
                   <p className="text-slate-500 text-sm">Industrial Design</p>
                 </div>
-                <p className="text-primary font-bold">$45.00</p>
+                <p className="text-primary font-bold">Rs. 13,500</p>
               </div>
             </div>
             
@@ -115,7 +115,7 @@ export default function Home() {
                   <p className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">Flexi-Dragon</p>
                   <p className="text-slate-500 text-sm">Articulated Toy</p>
                 </div>
-                <p className="text-primary font-bold">$25.00</p>
+                <p className="text-primary font-bold">Rs. 7,500</p>
               </div>
             </div>
 
@@ -129,7 +129,7 @@ export default function Home() {
                   <p className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">Neo-Planter</p>
                   <p className="text-slate-500 text-sm">Home Decor</p>
                 </div>
-                <p className="text-primary font-bold">$18.00</p>
+                <p className="text-primary font-bold">Rs. 5,400</p>
               </div>
             </div>
 
@@ -143,7 +143,7 @@ export default function Home() {
                   <p className="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight">MK-Case</p>
                   <p className="text-slate-500 text-sm">Tech Gear</p>
                 </div>
-                <p className="text-primary font-bold">$60.00</p>
+                <p className="text-primary font-bold">Rs. 18,000</p>
               </div>
             </div>
           </div>

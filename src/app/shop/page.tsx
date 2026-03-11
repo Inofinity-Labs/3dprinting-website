@@ -3,13 +3,14 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/server";
+import { formatLKRWithoutDecimals } from "@/utils/currency";
 
 // Fallback mock data if the Supabase database is empty
 const MOCK_PRODUCTS = [
   {
     id: "1",
     title: "Geometric Polygon Vase",
-    price: 45.00,
+    price: 13500,
     description: "A sleek, minimalist decor piece printed in premium matte PLA. Features a complex Voronoi pattern.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD3JUeNWWA__PlQCVkM85pT1fd9klFCgTXZxsQ04T1YN2rD2cEIXdnLhJqVBNeWH9zBR3S-82GVffRTyeoAU77hoHrivoA41EgAC9anrHnwWNJFweovBSJUzXzYKkq9mcmRcpzYhzcOGsNJ_1IteWnM4HfgFEBqhJqo_sIBkwhQcy8_nOz1yiuhRppRsH8GxRxi87Lgsi34DNzOkNUS-QyHAQbJc5hUbhiFsas4LUSFeDR6NbrbRucIw_YdK0ZUORHT3I6Q5lzPkEw",
     category: "Home Decor",
@@ -18,7 +19,7 @@ const MOCK_PRODUCTS = [
   {
     id: "2",
     title: "Industrial Gear Stand",
-    price: 29.00,
+    price: 8700,
     description: "Adjustable phone stand with functional rotating gears. Printed in high-strength Carbon Fiber PLA.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBZMt04RHTLfCa2XtA6nc2oFQMuirZL_b3ly6pd1rfWjRiQkWcKJjhc2lhbAJTavdkAQ6EVVmxVxSX4FsUr2s2c4XXq6msNwgHlNhlhr3x0q9FH6MFIrBe8PZ5Jh80L1CTNJJ0WD_HTw9pgVG2QmR8dGbOVtJ23FkGI-d-PiuK7IrAhpmKYC_pdQaqiCz8x1fpq5JsaeU-V3PHo9tYjR9tWj_TGuv6VimcrxmtnaXVcOAaulLEVwEFhjXshpsaKDoenPWFYKQ-fmXw",
     category: "Tech Gear"
@@ -26,7 +27,7 @@ const MOCK_PRODUCTS = [
   {
     id: "3",
     title: "Resin Abstract Head",
-    price: 110.00,
+    price: 33000,
     description: "High-detail 8k Resin print with a smooth satin finish. Perfect for desktops and modern shelving.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBd_ag0xgBY-RpzpNLs0WBgLE0nyjmBKqEoKmfeKRsbDkXixsF-rF-v7EiAwc99M5q4yD2ogIIjC7X2RtQrVHe1Xhuhvj0pYaxsMYd94kBnZvAPyN1CcbUoZz1kPIJ2-395C7f92uJ2cQBupcNA_b3afiOUbpUR1f56eESXZavSsXZ01Dv6DUsl3KLxSyVxIP80NjtgH3qIobmeuDWbzh07UN0Fy-gYYCyksv_hflk7e8lIcLwdXpZ89YT7Dw-elCz53jh0AlyYkbw",
     category: "Art"
@@ -34,7 +35,7 @@ const MOCK_PRODUCTS = [
   {
     id: "4",
     title: "Custom Motor Housing",
-    price: 65.00,
+    price: 19500,
     description: "Industrial-grade housing unit for NEMA motors. Heat resistant and impact durable materials.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuChoPO9ULY3HInKJ2iws8TvO29Yhwo79vp4NUbrzH12wHJieqfqJPizOMR8AiNg-oVd5lU29BIYogZTH9XCH-YaKO0DpNIABmJwWJF6MG7c_v0uokqel5By6q4LDbpkaVSOdTV--hGprb0B2VMa1WuIIWDX2bf44hY4MqWvkBpJu107oDlszHFJoOKBL90kK4hQgzDyS_dnZ3zHU2eAOgfuZFf7yXTmiW_kSMiW9eZBP2UDSesP2ST2TvBPPkPasbZFI0T_fG6rgpo",
     category: "Industrial"
@@ -42,7 +43,7 @@ const MOCK_PRODUCTS = [
   {
     id: "5",
     title: "Honeycomb Wall Tiles",
-    price: 18.00,
+    price: 5400,
     description: "Modular acoustic-inspired wall tiles. Price per set of 3. Includes magnetic mounting kit.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBARYQlodxAlZTHg9DvVRpnvhFIraFUmAQ4E6izOICrTZIn3McPjk3alIGu_gbx7ek3HWVpbCksLUtippGZmjRmQEnqAGsrfwV4v_I_YM-ULws7l8iIm3aiIHP59neuvLUFFsmXGYNwy4Hx_-AmlrEW5qoSmhn8eWRVk2Mg7FPdfZ0-7wU8-KFd_Vidlt-ht-2OfAebEWbkUvjKNLmusfTCwPmNiJyfsufbH3NPIuPoiWH1az7Ol9TjDUuA7mH3nkrqhv_s6QE1hwA",
     category: "Home Decor"
@@ -114,10 +115,10 @@ export default async function ShopPage() {
             <div className="mt-8 space-y-4">
               <p className="text-primary text-xs font-bold uppercase tracking-widest border-b border-zinc-200 dark:border-zinc-800 pb-2">Price Range</p>
               <div className="px-2">
-                <input className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" max="500" min="0" type="range" defaultValue="250"/>
+                <input className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" max="150000" min="0" type="range" defaultValue="75000"/>
                 <div className="flex justify-between mt-2 text-xs text-slate-500">
-                  <span>$0</span>
-                  <span>$500+</span>
+                  <span>Rs. 0</span>
+                  <span>Rs. 150,000+</span>
                 </div>
               </div>
             </div>
@@ -158,7 +159,7 @@ export default async function ShopPage() {
                 <div className="p-5 flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-slate-900 dark:text-white font-bold text-lg group-hover:text-primary transition-colors line-clamp-1" title={product.title}>{product.title}</h3>
-                    <span className="text-primary font-black ml-2 whitespace-nowrap">${Number(product.price).toFixed(2)}</span>
+                    <span className="text-primary font-black ml-2 whitespace-nowrap">{formatLKRWithoutDecimals(product.price)}</span>
                   </div>
                   <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 flex-1 line-clamp-3">{product.description}</p>
                   <Link href={`/shop/${product.id}`} className="w-full h-10 bg-primary hover:bg-primary/90 text-white dark:text-background-dark font-bold rounded-lg transition-colors flex items-center justify-center gap-2">

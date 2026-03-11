@@ -202,7 +202,7 @@ export default function UserProfilePage() {
                   </div>
                   <div className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-lg col-span-2">
                     <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Account Credits</p>
-                    <p className="text-2xl font-bold text-primary font-mono">$142.50</p>
+                    <p className="text-2xl font-bold text-primary font-mono">Rs. 42,750</p>
                   </div>
                 </div>
                 
@@ -321,7 +321,7 @@ export default function UserProfilePage() {
                       <td className="px-6 py-4 font-mono text-slate-700 dark:text-slate-300 font-bold">#ORD-4412</td>
                       <td className="px-6 py-4 text-slate-500 dark:text-slate-400">Sept 22, 2023</td>
                       <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-medium">Drone Arm (x4)</td>
-                      <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-mono">$84.20</td>
+                      <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-mono">Rs. 25,260</td>
                       <td className="px-6 py-4">
                         <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold uppercase">
                           <span className="w-1.5 h-1.5 bg-emerald-600 dark:bg-emerald-500 rounded-full"></span>
@@ -336,7 +336,7 @@ export default function UserProfilePage() {
                       <td className="px-6 py-4 font-mono text-slate-700 dark:text-slate-300 font-bold">#ORD-4398</td>
                       <td className="px-6 py-4 text-slate-500 dark:text-slate-400">Sept 15, 2023</td>
                       <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-medium">Enclosure Box</td>
-                      <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-mono">$32.00</td>
+                      <td className="px-6 py-4 text-slate-900 dark:text-slate-100 font-mono">Rs. 9,600</td>
                       <td className="px-6 py-4">
                         <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold uppercase">
                           <span className="w-1.5 h-1.5 bg-emerald-600 dark:bg-emerald-500 rounded-full"></span>

@@ -1,16 +1,21 @@
+"use client";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/utils/supabase/server";
-import { notFound } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
+import { notFound, useParams } from "next/navigation";
+import { formatLKR } from "@/utils/currency";
+import { useCart } from "@/contexts/CartContext";
+import { useState, useEffect } from "react";
 
 // Fallback mock data if the Supabase database is empty
 const MOCK_PRODUCTS = [
   {
     id: "1",
     title: "Geometric Polygon Vase",
-    price: 45.00,
+    price: 13500,
     description: "Engineered for both aesthetic appeal and structural integrity, this geometric vase is printed using high-grade, sustainable PLA material. The sharp polygonal edges catch light and shadow uniquely from every angle, making it a centerpiece for modern industrial spaces. Each piece is printed with extra-fine layer heights for a premium, injection-molded feel.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuD3JUeNWWA__PlQCVkM85pT1fd9klFCgTXZxsQ04T1YN2rD2cEIXdnLhJqVBNeWH9zBR3S-82GVffRTyeoAU77hoHrivoA41EgAC9anrHnwWNJFweovBSJUzXzYKkq9mcmRcpzYhzcOGsNJ_1IteWnM4HfgFEBqhJqo_sIBkwhQcy8_nOz1yiuhRppRsH8GxRxi87Lgsi34DNzOkNUS-QyHAQbJc5hUbhiFsas4LUSFeDR6NbrbRucIw_YdK0ZUORHT3I6Q5lzPkEw",
     category: "Home Decor",
@@ -18,7 +23,7 @@ const MOCK_PRODUCTS = [
   {
     id: "2",
     title: "Industrial Gear Stand",
-    price: 29.00,
+    price: 8700,
     description: "Adjustable phone stand with functional rotating gears. Printed in high-strength Carbon Fiber PLA. The interlocking mechanisms provide smooth adjustment angles while maintaining a robust, industrial aesthetic.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBZMt04RHTLfCa2XtA6nc2oFQMuirZL_b3ly6pd1rfWjRiQkWcKJjhc2lhbAJTavdkAQ6EVVmxVxSX4FsUr2s2c4XXq6msNwgHlNhlhr3x0q9FH6MFIrBe8PZ5Jh80L1CTNJJ0WD_HTw9pgVG2QmR8dGbOVtJ23FkGI-d-PiuK7IrAhpmKYC_pdQaqiCz8x1fpq5JsaeU-V3PHo9tYjR9tWj_TGuv6VimcrxmtnaXVcOAaulLEVwEFhjXshpsaKDoenPWFYKQ-fmXw",
     category: "Tech Gear"
@@ -26,7 +31,7 @@ const MOCK_PRODUCTS = [
   {
     id: "3",
     title: "Resin Abstract Head",
-    price: 110.00,
+    price: 33000,
     description: "High-detail 8k Resin print with a smooth satin finish. Perfect for desktops and modern shelving. The intricate curves and smooth surfaces demonstrate the peak capabilities of resin printing technology.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBd_ag0xgBY-RpzpNLs0WBgLE0nyjmBKqEoKmfeKRsbDkXixsF-rF-v7EiAwc99M5q4yD2ogIIjC7X2RtQrVHe1Xhuhvj0pYaxsMYd94kBnZvAPyN1CcbUoZz1kPIJ2-395C7f92uJ2cQBupcNA_b3afiOUbpUR1f56eESXZavSsXZ01Dv6DUsl3KLxSyVxIP80NjtgH3qIobmeuDWbzh07UN0Fy-gYYCyksv_hflk7e8lIcLwdXpZ89YT7Dw-elCz53jh0AlyYkbw",
     category: "Art"
@@ -34,7 +39,7 @@ const MOCK_PRODUCTS = [
   {
     id: "4",
     title: "Custom Motor Housing",
-    price: 65.00,
+    price: 19500,
     description: "Industrial-grade housing unit for NEMA motors. Heat resistant and impact durable materials. Designed with optimal airflow channels for passive cooling during heavy operational loads.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuChoPO9ULY3HInKJ2iws8TvO29Yhwo79vp4NUbrzH12wHJieqfqJPizOMR8AiNg-oVd5lU29BIYogZTH9XCH-YaKO0DpNIABmJwWJF6MG7c_v0uokqel5By6q4LDbpkaVSOdTV--hGprb0B2VMa1WuIIWDX2bf44hY4MqWvkBpJu107oDlszHFJoOKBL90kK4hQgzDyS_dnZ3zHU2eAOgfuZFf7yXTmiW_kSMiW9eZBP2UDSesP2ST2TvBPPkPasbZFI0T_fG6rgpo",
     category: "Industrial"
@@ -42,7 +47,7 @@ const MOCK_PRODUCTS = [
   {
     id: "5",
     title: "Honeycomb Wall Tiles",
-    price: 18.00,
+    price: 5400,
     description: "Modular acoustic-inspired wall tiles. Price per set of 3. Includes magnetic mounting kit. The hexagonal design allows for infinite expansion and custom pattern creation on any flat surface.",
     image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuBARYQlodxAlZTHg9DvVRpnvhFIraFUmAQ4E6izOICrTZIn3McPjk3alIGu_gbx7ek3HWVpbCksLUtippGZmjRmQEnqAGsrfwV4v_I_YM-ULws7l8iIm3aiIHP59neuvLUFFsmXGYNwy4Hx_-AmlrEW5qoSmhn8eWRVk2Mg7FPdfZ0-7wU8-KFd_Vidlt-ht-2OfAebEWbkUvjKNLmusfTCwPmNiJyfsufbH3NPIuPoiWH1az7Ol9TjDUuA7mH3nkrqhv_s6QE1hwA",
     category: "Home Decor"
@@ -57,26 +62,74 @@ const MOCK_PRODUCTS = [
   }
 ];
 
-export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const supabase = await createClient();
+export default function ProductDetailPage() {
+  const params = useParams();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart();
+  const supabase = createClient();
 
-  let product = null;
+  useEffect(() => {
+    const fetchProduct = async () => {
+      const id = params.id as string;
+      let productData = null;
 
-  // Supabase uses UUIDs for IDs. If it's not a UUID, don't query the DB to prevent thrown errors.
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  if (isUUID) {
-    const { data } = await supabase.from('products').select('*').eq('id', id).single();
-    product = data;
+      // Supabase uses UUIDs for IDs. If it's not a UUID, don't query the DB to prevent thrown errors.
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+      if (isUUID) {
+        const { data } = await supabase.from('products').select('*').eq('id', id).single();
+        productData = data;
+      }
+
+      // Fallback to mock data
+      if (!productData) {
+        productData = MOCK_PRODUCTS.find(p => p.id === id);
+      }
+
+      setProduct(productData);
+      setLoading(false);
+    };
+
+    fetchProduct();
+  }, [params.id, supabase]);
+
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image_url: product.image_url,
+        category: product.category
+      }, quantity);
+    }
+  };
+
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 1;
+    setQuantity(Math.max(1, value));
+  };
+
+  if (loading) {
+    return (
+      <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-slate-50 dark:bg-background-dark text-slate-900 dark:text-zinc-100 antialiased font-display">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-slate-500 dark:text-zinc-400">Loading product...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
-  // Fallback to mock data
   if (!product) {
-    product = MOCK_PRODUCTS.find(p => p.id === id);
-  }
-
-  if (!product) {
-    notFound();
+    return notFound();
   }
 
   return (
@@ -123,7 +176,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-tight">{product.title}</h1>
             
             <div className="flex items-center gap-4 mb-6">
-              <p className="text-3xl font-bold text-primary">${Number(product.price).toFixed(2)}</p>
+              <p className="text-3xl font-bold text-primary">{formatLKR(product.price)}</p>
               <div className="h-6 w-px bg-slate-300 dark:bg-slate-700"></div>
               <div className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-primary text-sm fill-1" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
@@ -165,11 +218,32 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex items-center bg-white dark:bg-zinc-800 rounded-lg p-1 border border-zinc-200 dark:border-zinc-700 w-fit">
-                <button className="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors"><span className="material-symbols-outlined">remove</span></button>
-                <input className="w-12 bg-transparent border-none text-center font-bold focus:ring-0 outline-none" type="text" defaultValue="1"/>
-                <button className="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors"><span className="material-symbols-outlined">add</span></button>
+                <button 
+                  type="button"
+                  onClick={decrementQuantity}
+                  className="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors"
+                >
+                  <span className="material-symbols-outlined">remove</span>
+                </button>
+                <input 
+                  type="number" 
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  className="w-12 bg-transparent border-none text-center font-bold focus:ring-0 outline-none" 
+                  min="1"
+                />
+                <button 
+                  type="button"
+                  onClick={incrementQuantity}
+                  className="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors"
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
               </div>
-              <button className="flex-1 bg-primary text-white dark:text-background-dark py-4 rounded-lg font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-amber-500 transition-colors">
+              <button 
+                onClick={handleAddToCart}
+                className="flex-1 bg-primary text-white dark:text-background-dark py-4 rounded-lg font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-amber-500 transition-colors"
+              >
                 <span className="material-symbols-outlined font-bold">shopping_cart</span>
                 Add to Cart
               </button>

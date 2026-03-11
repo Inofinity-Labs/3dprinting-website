@@ -29,7 +29,7 @@ export default function PricingPage() {
               <h2 className="text-3xl font-black uppercase italic text-slate-900 dark:text-white">Prototype</h2>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-5xl font-black italic tracking-tighter text-primary">$49</span>
+              <span className="text-5xl font-black italic tracking-tighter text-primary">Rs. 14,700</span>
               <span className="text-slate-500 font-bold uppercase text-xs">/ startup cost</span>
             </div>
             <p className="text-slate-500 dark:text-zinc-400 text-sm leading-relaxed">
@@ -64,7 +64,7 @@ export default function PricingPage() {
               <h2 className="text-3xl font-black uppercase italic text-white">Production</h2>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="text-5xl font-black italic tracking-tighter text-primary">$499</span>
+              <span className="text-5xl font-black italic tracking-tighter text-primary">Rs. 149,700</span>
               <span className="text-slate-300 dark:text-zinc-400 font-bold uppercase text-xs">/ monthly base</span>
             </div>
             <p className="text-slate-400 dark:text-zinc-400 text-sm leading-relaxed">
@@ -135,10 +135,10 @@ export default function PricingPage() {
                     <label className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-zinc-500">Material Selection</label>
                     <div className="relative">
                       <select className="w-full bg-white dark:bg-background-dark border-slate-300 dark:border-zinc-800 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none text-slate-900 dark:text-white">
-                        <option>PLA - Standard ($0.05/cm³)</option>
-                        <option>Nylon-CF ($0.15/cm³)</option>
-                        <option>Ultem 1010 ($0.45/cm³)</option>
-                        <option>Bio-compatible Resin ($0.35/cm³)</option>
+                        <option>PLA - Standard (Rs. 15/cm³)</option>
+                        <option>Nylon-CF (Rs. 45/cm³)</option>
+                        <option>Ultem 1010 (Rs. 135/cm³)</option>
+                        <option>Bio-compatible Resin (Rs. 105/cm³)</option>
                       </select>
                       <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500">unfold_more</span>
                     </div>

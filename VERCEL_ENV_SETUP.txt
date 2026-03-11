@@ -1,0 +1,12 @@
+# Add these Environment Variables in Vercel Dashboard:
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# To get these values:
+# 1. Go to your Supabase project dashboard
+# 2. Settings → API
+# 3. Copy the Project URL and anon public key
+
+# Optional (for server-side operations):
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here

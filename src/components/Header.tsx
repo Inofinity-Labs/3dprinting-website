@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import LoginModal from "./LoginModal";
-import { createClient } from '@/utils/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { createClient } from '@/utils/supabase/client';import { useCart } from "@/contexts/CartContext";import { User } from '@supabase/supabase-js';
 
 export default function Header() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);  const { getTotalItems, toggleCart } = useCart();  const supabase = createClient();
 
   useEffect(() => {
     // Check active session
@@ -49,8 +47,16 @@ export default function Header() {
               <span className="material-symbols-outlined absolute left-3 text-slate-400 text-lg">search</span>
               <input className="w-full h-10 pl-10 pr-4 rounded-lg border-none bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-primary text-sm outline-none" placeholder="Search models..." type="text"/>
             </label>
-            <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-primary/20 hover:text-primary transition-all">
+            <button 
+              onClick={toggleCart}
+              className="relative flex items-center justify-center rounded-lg h-10 w-10 bg-slate-200/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-primary/20 hover:text-primary transition-all"
+            >
               <span className="material-symbols-outlined">shopping_cart</span>
+              {getTotalItems() > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {getTotalItems()}
+                </span>
+              )}
             </button>
             
             {user ? (
