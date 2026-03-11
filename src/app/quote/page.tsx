@@ -37,6 +37,7 @@ export default function QuotePage() {
   const [file, setFile] = useState<File | null>(null);
   const [estimatedVolume, setEstimatedVolume] = useState<number>(0); // cm3
   const [estimatedPrice, setEstimatedPrice] = useState<number>(0);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'error'|'success'; text: string } | null>(null);
@@ -85,10 +86,23 @@ export default function QuotePage() {
   };
 
   const handleValidFile = async (f: File) => {
+    setIsProcessingFile(true);
+    setStatusMsg(null);
     setFile(f);
-    // Use ThreeJS to precisely calculate the actual geometry volume
-    const exactVolume = await estimatePrintVolume(f);
-    setEstimatedVolume(exactVolume);
+    
+    try {
+      // Use ThreeJS to precisely calculate the actual geometry volume
+      const exactVolume = await estimatePrintVolume(f);
+      setEstimatedVolume(exactVolume);
+      setStatusMsg({ type: 'success', text: `File processed successfully! Estimated volume: ${exactVolume.toFixed(2)} cm³` });
+    } catch (error) {
+      console.error('Error processing file:', error);
+      setStatusMsg({ type: 'error', text: 'Failed to process the STL file. Please check the file format.' });
+      setFile(null);
+      setEstimatedVolume(0);
+    } finally {
+      setIsProcessingFile(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -154,7 +168,7 @@ export default function QuotePage() {
               Configuration
             </h3>
             
-            <div className={`space-y-8 ${!file ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`space-y-8 ${!file || isProcessingFile ? 'opacity-50 pointer-events-none' : ''}`}>
               
               {/* Material Selection */}
               <div className="space-y-4">
@@ -162,22 +176,23 @@ export default function QuotePage() {
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Material</label>
                   {selectedMaterial && <span className="text-xs font-semibold px-2 py-0.5 bg-primary/10 text-primary rounded">{selectedMaterial.type}</span>}
                 </div>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-700 scrollbar-track-transparent">
                   {materials.map(mat => (
                     <button 
                       key={mat.id}
                       onClick={() => setSelectedMaterial(mat)}
+                      title={`${mat.name} - ${mat.type} - Rs. ${Number(mat.price_per_cm3).toFixed(2)}/cm³`}
                       className={`flex items-center justify-between px-4 py-3 rounded-lg border transition-all ${
                         selectedMaterial?.id === mat.id 
                           ? 'bg-primary/10 border-primary text-primary font-medium shadow-sm' 
                           : 'bg-transparent border-zinc-200 dark:border-zinc-800 hover:border-primary/50 text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-[20px]">{mat.type === 'FDM' ? 'layers' : 'opacity'}</span>
-                        <span className="text-sm">{mat.name}</span>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="material-symbols-outlined text-[20px] flex-shrink-0">{mat.type === 'FDM' ? 'layers' : 'opacity'}</span>
+                        <span className="text-sm truncate" title={mat.name}>{mat.name}</span>
                       </div>
-                      <span className="text-xs font-bold">Rs. {Number(mat.price_per_cm3).toFixed(2)}/cm³</span>
+                      <span className="text-xs font-bold flex-shrink-0 ml-2">Rs. {Number(mat.price_per_cm3).toFixed(2)}/cm³</span>
                     </button>
                   ))}
                 </div>
@@ -265,7 +280,7 @@ export default function QuotePage() {
               </div>
             )}
 
-            {!file ? (
+            {!file && !isProcessingFile ? (
             <div 
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleFileDrop}
@@ -298,6 +313,27 @@ export default function QuotePage() {
                 </button>
               </div>
             </div>
+            ) : isProcessingFile ? (
+            // Processing State
+            <div className="flex-1 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary bg-primary/5 dark:bg-primary/5 px-4 md:px-8 py-16 relative">
+              <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 animate-pulse">
+                <span className="material-symbols-outlined text-4xl animate-spin">autorenew</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-center">Processing STL File...</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-center max-w-md mb-4">
+                Analyzing geometry and calculating volume. This may take a moment for large files.
+              </p>
+              {file && (
+                <div className="bg-white/50 dark:bg-zinc-900/50 px-4 py-2 rounded-lg backdrop-blur-sm">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-xs" title={file.name}>
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Size: {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  </p>
+                </div>
+              )}
+            </div>
             ) : (
             <div className="flex-1 rounded-2xl border-2 border-solid border-primary/30 bg-primary/5 dark:bg-primary/5 relative overflow-hidden flex flex-col items-center justify-center min-h-[400px]">
                 <div className="absolute inset-0 z-0 pointer-events-auto">
@@ -313,20 +349,26 @@ export default function QuotePage() {
                   
                   <div className="flex gap-2">
                     <button 
-                      onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                      className="px-4 py-2 bg-white dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 rounded-lg font-bold transition-colors text-slate-700 dark:text-slate-200 text-sm"
+                      onClick={(e) => { e.stopPropagation(); setFile(null); setEstimatedVolume(0); setEstimatedPrice(0); setStatusMsg(null); }}
+                      disabled={isProcessingFile || isUploading}
+                      className="px-4 py-2 bg-white dark:bg-zinc-800 border-2 border-slate-200 dark:border-zinc-700 hover:border-slate-300 dark:hover:border-zinc-600 rounded-lg font-bold transition-colors text-slate-700 dark:text-slate-200 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Remove
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
-                      disabled={isUploading}
+                      disabled={isUploading || isProcessingFile}
                       className="px-6 bg-primary hover:bg-amber-500 text-white dark:text-background-dark py-2 rounded-lg font-black transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-primary/20 text-sm w-full sm:w-auto"
                     >
                       {isUploading ? (
                         <>
                           <span className="material-symbols-outlined animate-spin text-sm">autorenew</span>
                           Uploading...
+                        </>
+                      ) : isProcessingFile ? (
+                        <>
+                          <span className="material-symbols-outlined animate-spin text-sm">autorenew</span>
+                          Processing...
                         </>
                       ) : (
                         <>Submit Request</>
